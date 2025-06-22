@@ -114,7 +114,7 @@ def demonstrate_safe_decorator():
 
 def demonstrate_metaclass_safety():
     """Shows thread-safe metaclass singleton"""
-    print("\nMETACLASS - NATURALLY THREAD SAFE")
+    print("\nMETACLASS - THREAD SAFE")
     print("=" * 40)
 
     class Database(metaclass=ThreadSafeSingletonMeta):
