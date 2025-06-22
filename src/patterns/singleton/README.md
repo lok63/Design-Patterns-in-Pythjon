@@ -56,8 +56,20 @@ See `04_decorator_subclassing_pitfall.py` for a demonstration of this issue, and
 
 ---
 
+## Thread Safety Issues with the Decorator Singleton
+
+The decorator singleton approach is **not thread-safe** by default. In a multi-threaded environment, it is possible for two threads to simultaneously create two instances of the singleton, breaking the singleton guarantee.
+
+- This can happen if two threads check for the instance at the same time and both see that it does not exist, so both create a new instance.
+- To make a singleton truly thread-safe, you must use locks or other synchronization mechanisms.
+
+See `05_decorator_thread_safety_issue.py` for a demonstration of this issue and how to address it.
+
+---
+
 See the following files for examples:
 - `01_new_pitfall.py`: Shows the `__new__` singleton pattern and its constructor pitfall.
 - `02_decorator_example.py`: Singleton via decorator (fixes the pitfall, but breaks inheritance).
 - `03_metaclass_example.py`: Singleton via metaclass (fixes the pitfall and supports inheritance).
 - `04_decorator_subclassing_pitfall.py`: Demonstrates the decorator subclassing issue and metaclass solution.
+- `05_decorator_thread_safety_issue.py`: Demonstrates thread safety issues with the decorator singleton and solutions.

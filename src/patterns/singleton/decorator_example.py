@@ -2,7 +2,7 @@ import os
 from random import randint
 
 
-def singleton(cls):
+def singleton_decorator(cls):
     instances = {}
 
     def get_instance(*args, **kwargs):
@@ -13,7 +13,7 @@ def singleton(cls):
     return get_instance
 
 
-@singleton
+@singleton_decorator
 class ConfigManager:
     def __init__(self):
         print(f"Initializing with random number: {randint(1, 100)}")

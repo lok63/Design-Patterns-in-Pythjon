@@ -1,26 +1,18 @@
-#!/usr/bin/env python3
 """
 Simple demonstration: Why decorator singletons break inheritance
 """
+
+from src.patterns.singleton.decorator_example import singleton_decorator
+from src.patterns.singleton.metaclass_example import SingletonMeta
 
 
 def demonstrate_decorator_issue():
     """Shows why decorator singleton breaks inheritance"""
 
-    def singleton(cls):
-        instances = {}
-
-        def get_instance(*args, **kwargs):
-            if cls not in instances:
-                instances[cls] = cls(*args, **kwargs)
-            return instances[cls]
-
-        return get_instance
-
     print("DECORATOR APPROACH - INHERITANCE FAILS")
     print("=" * 40)
 
-    @singleton
+    @singleton_decorator
     class Logger:
         def __init__(self, name="Logger"):
             self.name = name
@@ -40,14 +32,6 @@ def demonstrate_decorator_issue():
 
 def demonstrate_metaclass_solution():
     """Shows how metaclass singleton supports inheritance"""
-
-    class SingletonMeta(type):
-        _instances = {}
-
-        def __call__(cls, *args, **kwargs):
-            if cls not in cls._instances:
-                cls._instances[cls] = super().__call__(*args, **kwargs)
-            return cls._instances[cls]
 
     print("\nMETACLASS APPROACH - INHERITANCE WORKS")
     print("=" * 40)
