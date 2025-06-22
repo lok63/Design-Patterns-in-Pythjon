@@ -3,6 +3,49 @@
 - **Subclass**: The class that inherits from the base class (e.g., `Duck`, `Dog`).
 - **Mixin**: A special kind of base class, designed to add specific functionality when used in multiple inheritance, but not intended to stand alone.
 
+## Community Consensus: Mixins Should NOT Have State
+
+### Clear Guidelines from the Community
+- Mixins are not supposed to have a state of their own (not that they technically can't—in Python they can—but the definition of a mixin class is that it only provides behaviours).
+- The key characteristic of a mixin is that it doesn't represent an "is-a" relationship like a normal subclass. It should be designed in a way that it doesn't have its own state (instance variables) in most cases.
+- A mixin is a class with methods (functionality) only and no attributes (data), while a parent class in inheritance has both attributes (data) and methods (functionality).
+
+### What Mixins Should Provide
+- A mixin is a class that defines and implements a single, well-defined feature. Subclasses that inherit from the mixin inherit this feature—and nothing else.
+- Mixins are typically small, focused classes that contain a set of methods that can be reused across multiple classes. They provide a way to break down functionality into smaller, more manageable components.
+
+### Best Practices According to the Community
+1. **Behavior, Not State**
+    - ✅ DO: Provide methods that operate on existing state
+    - ❌ DON'T: Add instance variables or maintain internal state
+    - Example: A LoggingMixin that provides logging methods but doesn't store log state
+2. **Single Responsibility**
+    - Mixins should have a single, well-defined responsibility. Keeping them small and focused makes them easier to understand, maintain, and reuse.
+3. **Dependency on Host Class State**
+    - Mixins cannot usually be too generic. After all, they are designed to add features to classes, but these new features often interact with other pre-existing features of the augmented class.
+    - This means mixins can:
+        - ✅ Access and operate on the host class's state
+        - ✅ Expect certain attributes to exist in the host class
+        - ❌ Define their own instance variables
+
+### Real-World Examples from the Community
+**Good Mixin (Stateless):**
+```python
+class JSONSerializableMixin:
+    def to_json(self):
+        return json.dumps(self.__dict__)  # Uses host's state, no own state
+```
+**Django's Approach:**
+Django's `TemplateResponseMixin` and `ContextMixin` are almost always found together, since they work well in tandem. These mixins provide methods but rely on the host class for state.
+
+### Why This Matters
+1. **Orthogonality**
+    - Mixins originate in the LISP programming language. Modern OOP languages implement mixins in many different ways, but their orthogonality to the inheritance tree is key.
+2. **Avoiding Complexity**
+    - Most people use Python mixins improperly, which defeats the whole purpose of the mixin in the first place.
+3. **Composition vs Inheritance**
+    - If the relationship between objects A and B is "A is a B", then B is a base class, not a mixin. If the relationship is "A has a B", then consider using composition instead of inheritance.
+
 ## Inheritance Order for Mixins
 - In Python, **mixins should be listed first** in the inheritance list, followed by the main/base class. This ensures mixin methods take precedence in the method resolution order (MRO).
 
@@ -134,3 +177,84 @@ class C(LoggingMixin, TimestampMixin):
 **Conclusion:**
 - Testing static methods: No real difference—both are simple and direct.
 - Testing object data conversion: Mixin feels more "object-oriented" but requires inheritance; static class is more flexible and decoupled, but less idiomatic as an object method.
+
+## Mixins SHOULD Modify Subclass State
+
+The Python community strongly supports mixins having methods that modify the state of the subclass. This is actually considered one of the key advantages of mixins.
+
+### Explicit Community Consensus
+- The real advantage of mixin classes is that, while they cannot contain any internal state of their own, they can manipulate the internal state of the class they are 'mixed' into.
+
+#### Example:
+```python
+class PlainPizza:
+    def __init__(self):
+        self.toppings = []
+
+class OlivesMixin:
+    def add_olives(self):
+        print("Adding olives!")
+        self.toppings += ['olives']  # ✅ MODIFIES SUBCLASS STATE
+
+class SistersPizza(OlivesMixin, PlainPizza):
+    def prepare_pizza(self):
+        self.add_olives()  # This modifies self.toppings
+```
+
+### Real-World Examples
+1. **Geoplot Library (Production Code):**
+   - In Geoplot, classes like `KDEPlot(Plot, HueMixin, LegendMixin, ClipMixin)` use mixins whose methods (e.g., `set_hue_values()`, `paint_legend()`, `paint_clip()`) all modify the plot's internal state.
+2. **Django Framework:**
+   - Django's `TemplateResponseMixin` and `ContextMixin` are almost always found together, since they work well in tandem. These mixins modify view state by setting context data and template responses.
+
+### Key Principles
+**✅ What Mixins SHOULD Do:**
+- Modify subclass attributes: `self.attribute = new_value`
+- Call methods that change state: `self.some_method_that_modifies_state()`
+- Interact with existing attributes: These new features often interact with other pre-existing features of the augmented class. For example, a `resize` mixin method might interact with `size_x` and `size_y` attributes that must be present in the object.
+
+**❌ What Mixins SHOULD NOT Do:**
+- Have their own instance variables: No `self.mixin_specific_attribute = value` in `__init__`
+- Maintain their own state: No internal state management within the mixin
+
+### Why This Works Well
+1. **Single Responsibility:**
+   - A mixin might be used to add a new set of methods to a class, instead of just modifying behavior it adds new blocks of code and new features to the existing class.
+2. **Clear Interface:**
+   - A mixin is a class that defines and implements a single, well-defined feature. Subclasses that inherit from the mixin inherit this feature—and nothing else.
+3. **Explicit Dependencies:**
+   - Mixins can expect certain attributes to exist in the host class and operate on them.
+
+## Using Mixins to Modify Attributes
+
+Mixins are especially useful for adding reusable, composable features to classes by providing methods that modify the attributes of the host class. This pattern allows you to:
+- Add new behaviors to classes without changing their inheritance hierarchy.
+- Compose multiple features together in a flexible way.
+- Keep code DRY by reusing logic across different classes.
+
+### Why Is This Useful?
+- **Reusability:** You can write a mixin once and use it in many different classes.
+- **Composability:** You can combine multiple mixins to build complex behaviors from simple, focused components.
+- **Separation of Concerns:** Each mixin handles a single aspect of behavior, making code easier to maintain and understand.
+
+### Example: Pizza Topping Mixins
+See `pizza_topping_mixin_example.py` for a demonstration of how mixins can add toppings to a pizza by modifying the `toppings` attribute of the host class:
+```python
+class PlainPizza:
+    def __init__(self):
+        self.toppings = []
+
+class OlivesMixin:
+    def add_olives(self):
+        self.toppings += ["olives"]  # Modifies host class attribute
+
+class CheeseMixin:
+    def add_cheese(self):
+        self.toppings += ["cheese"]
+
+class DeluxePizza(OlivesMixin, CheeseMixin, PlainPizza):
+    def prepare_pizza(self):
+        self.add_olives()
+        self.add_cheese()
+```
+This approach allows you to easily create new pizza types by mixing in different topping behaviors, demonstrating the power and flexibility of stateful mixins.
